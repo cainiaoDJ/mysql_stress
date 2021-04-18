@@ -55,6 +55,7 @@ func main() {
 				}
 				mdb.SetMaxOpenConns(int(n))
 				mdb.SetMaxIdleConns(int(n))
+				mdb.SetConnMaxIdleTime(10)
 				tmp = insertDataTest(dn, tn, n)
 				tmp.Func = "InsertDataTest"
 				xlsData = append(xlsData, tmp)

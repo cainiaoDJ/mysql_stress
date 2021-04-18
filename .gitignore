@@ -2,3 +2,4 @@
 .DS_Store
 mysql_stress
 *.xlsx
+cfg.yml
