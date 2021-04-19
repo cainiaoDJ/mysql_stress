@@ -69,7 +69,12 @@ func main() {
 		}
 	}
 	utils.AppLog.Info("test end!")
-	excel.WriteToExcel(xlsData, "mysql_stress")
+	err = excel.WriteToExcel(xlsData, "mysql_stress")
+	if err != nil {
+		utils.AppLog.Errorf("write to excel failed. err:%s ", err.Error())
+		return
+	}
+	utils.AppLog.Info("write result to excel")
 }
 
 func insertDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
@@ -198,7 +203,7 @@ func UpdateDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	//	}
 	//	time.Sleep(1 * time.Second)
 	//}()
-	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	var wg sync.WaitGroup
 	startTime := time.Now()
 	for pid := uint(0); pid < connNum; pid++ {
@@ -207,6 +212,7 @@ func UpdateDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 		go func() {
 			defer wg.Done()
 			for i := uint(0); i < config.Cfg.InitRows/connNum; i++ {
+				random := rand.New(rand.NewSource(time.Now().UnixNano()))
 				uid := uint(random.Int63n(int64(config.Cfg.InitRows))) + 100000000
 				db := uid % DBNum
 				tb := uid % tableNum
