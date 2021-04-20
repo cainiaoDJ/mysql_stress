@@ -46,16 +46,25 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	go func() {
+		for {
+			st := mdb.Stats()
+			utils.AppLog.Infof("Idle:%3d, InUse:%3d, OpenConnections:%3d", st.Idle, st.InUse, st.OpenConnections)
+			time.Sleep(time.Second)
+		}
+	}()
+	mdb.SetMaxOpenConns(int(config.Cfg.MaxDBConns))
+	mdb.SetConnMaxLifetime(time.Duration(config.Cfg.MaxDBConnsLifetime) * time.Second)
+	defer msql.CleanTestDB(dbObj)
 
-	for _, n := range []uint{10, 20, 50, 100, 200, 300} {
-		for _, dn := range []uint{10, 20, 50, 100} {
-			for _, tn := range []uint{10, 20, 100} {
+	// 先从高并发往低并发走
+	for _, n := range []uint{300, 200, 100, 50, 10} {
+		for _, dn := range []uint{1, 10, 20, 100} {
+			for _, tn := range []uint{1, 10, 20, 100, 200} {
 				if tn < dn {
 					continue
 				}
-				mdb.SetMaxOpenConns(int(n))
-				mdb.SetMaxIdleConns(int(n))
-				mdb.SetConnMaxIdleTime(10)
+				utils.AppLog.Infof("Start test. DB:%d,TB:%d,Routine:%d", dn, tn, n)
 				tmp = insertDataTest(dn, tn, n)
 				tmp.Func = "InsertDataTest"
 				xlsData = append(xlsData, tmp)

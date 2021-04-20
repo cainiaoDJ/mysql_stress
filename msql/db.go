@@ -4,7 +4,12 @@ import (
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"log"
 	"mysql_stress/utils"
+	"os"
+	"time"
+
 	//_ "github.com/go-msql-driver/mysql"
 	//"xorm.io/xorm"
 	"mysql_stress/config"
@@ -37,6 +42,19 @@ func GetCreateTableSQL(DBNum uint, tbNum uint) (sql []string) {
 	}
 	return
 }
+
+func CleanTestDB(db *gorm.DB) {
+	cleanSQL := cleanDBs()
+	for _, s := range cleanSQL {
+		tx := db.Exec(s)
+		if tx.Error != nil {
+			panic("clean dbs failed:" + tx.Error.Error())
+		}
+		//db.Exec(s)
+	}
+	utils.AppLog.Info("clean test db completed!")
+}
+
 func InitDB(DBNum uint) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=utf8",
 		config.Cfg.Username,
@@ -51,14 +69,8 @@ func InitDB(DBNum uint) {
 		panic("db connect failed:" + err.Error())
 	}
 
-	cleanSQL := cleanDBs()
-	for _, s := range cleanSQL {
-		tx := db.Exec(s)
-		if tx.Error != nil {
-			panic("create dbs failed:" + tx.Error.Error())
-		}
-		//db.Exec(s)
-	}
+	CleanTestDB(db)
+
 	//time.Sleep(5 * time.Second)
 	createSQL := getCreateDBSQL(DBNum)
 	for _, s := range createSQL {
@@ -72,7 +84,7 @@ func InitDB(DBNum uint) {
 }
 
 func GetDBConnects() *gorm.DB {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=utf8",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=utf8&timeout=8s",
 		config.Cfg.Username,
 		config.Cfg.Password,
 		config.Cfg.Host,
@@ -80,7 +92,18 @@ func GetDBConnects() *gorm.DB {
 	)
 	//for i := uint(0); i < num; i++ {
 	//db, err := xorm.NewEngine("mysql", fmt.Sprintf(dsn, i))
-	dbConn, err := gorm.Open(mysql.Open(dsn))
+	newLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold:             time.Second,  // Slow SQL threshold
+			LogLevel:                  logger.Error, // Log level
+			IgnoreRecordNotFoundError: true,         // Ignore ErrRecordNotFound error for logger
+			Colorful:                  false,        // Disable color
+		},
+	)
+	dbConn, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: newLogger,
+	})
 
 	if err != nil {
 		panic("db connect failed:" + err.Error())

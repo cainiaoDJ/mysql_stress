@@ -8,11 +8,13 @@ import (
 )
 
 type AppConfig struct {
-	Host     string `yaml:"host"`
-	Port     uint   `yaml:"port"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	InitRows uint   `yaml:"init_rows"`
+	Host               string `yaml:"host"`
+	Port               uint   `yaml:"port"`
+	Username           string `yaml:"username"`
+	Password           string `yaml:"password"`
+	InitRows           uint   `yaml:"init_rows"`
+	MaxDBConns         uint   `yaml:"max_db_conns"`
+	MaxDBConnsLifetime uint   `yaml:"max_conn_life_time"`
 }
 
 var Cfg *AppConfig
@@ -22,11 +24,13 @@ func LoadAppConfig(cfgPath string) {
 	if err != nil {
 		fmt.Println("read config err, load default value")
 		Cfg = &AppConfig{
-			Host:     "127.0.0.1",
-			Port:     3306,
-			Username: "root",
-			Password: "123456",
-			InitRows: 10000,
+			Host:               "127.0.0.1",
+			Port:               3306,
+			Username:           "root",
+			Password:           "123456",
+			InitRows:           10000,
+			MaxDBConns:         100,
+			MaxDBConnsLifetime: 0,
 		}
 		return
 	}
