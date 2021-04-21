@@ -59,7 +59,7 @@ func main() {
 
 	// 先从高并发往低并发走
 	for _, n := range []uint{300, 200, 100, 50, 10} {
-		for _, dn := range []uint{1, 10, 20, 100} {
+		for _, dn := range []uint{1, 2, 10, 20, 100} {
 			for _, tn := range []uint{1, 10, 20, 100, 200} {
 				if tn < dn {
 					continue
@@ -167,7 +167,7 @@ func ReadDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	//	}
 	//	time.Sleep(1 * time.Second)
 	//}()
-	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	var wg sync.WaitGroup
 	startTime := time.Now()
 	for pid := uint(0); pid < connNum; pid++ {
@@ -176,6 +176,7 @@ func ReadDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 		go func() {
 			defer wg.Done()
 			for i := uint(0); i < config.Cfg.InitRows/connNum; i++ {
+				random := rand.New(rand.NewSource(time.Now().UnixNano()))
 				uid := uint(random.Int63n(int64(config.Cfg.InitRows))) + 100000000
 				db := uid % DBNum
 				tb := uid % tableNum
