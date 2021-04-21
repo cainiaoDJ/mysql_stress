@@ -15,6 +15,7 @@ type AppConfig struct {
 	InitRows           uint   `yaml:"init_rows"`
 	MaxDBConns         uint   `yaml:"max_db_conns"`
 	MaxDBConnsLifetime uint   `yaml:"max_conn_life_time"`
+	PoolStatLog        bool   `yaml:"pool_stat_log"`
 }
 
 var Cfg *AppConfig
@@ -31,6 +32,7 @@ func LoadAppConfig(cfgPath string) {
 			InitRows:           10000,
 			MaxDBConns:         100,
 			MaxDBConnsLifetime: 0,
+			PoolStatLog:        true,
 		}
 		return
 	}

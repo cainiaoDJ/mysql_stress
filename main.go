@@ -41,29 +41,33 @@ func main() {
 	//insertDataTest(config.Cfg.DBNum, config.Cfg.TableNum)
 	var xlsData []excel.RowData
 	var tmp excel.RowData
+	tmp.Counter = config.Cfg.InitRows
 
 	mdb, err := dbObj.DB()
 	if err != nil {
 		panic(err)
 	}
-	go func() {
-		for {
-			st := mdb.Stats()
-			utils.AppLog.Infof("Idle:%3d, InUse:%3d, OpenConnections:%3d", st.Idle, st.InUse, st.OpenConnections)
-			time.Sleep(time.Second)
-		}
-	}()
-	mdb.SetMaxOpenConns(int(config.Cfg.MaxDBConns))
+	if config.Cfg.PoolStatLog {
+		go func() {
+			for {
+				st := mdb.Stats()
+				utils.AppLog.Infof("Idle:%-4d, InUse:%-4d, OpenConnections:%-4d,MaxOpenConnections:%-4d",
+					st.Idle, st.InUse, st.OpenConnections, st.MaxOpenConnections)
+				time.Sleep(time.Second)
+			}
+		}()
+	}
+
 	mdb.SetConnMaxLifetime(time.Duration(config.Cfg.MaxDBConnsLifetime) * time.Second)
 	defer msql.CleanTestDB(dbObj)
 
 	// 先从高并发往低并发走
-	for _, n := range []uint{300, 200, 100, 50, 10} {
+	for _, n := range []uint{10, 50, 100, 200, 400, 500} {
 		for _, dn := range []uint{1, 2, 10, 20, 100} {
-			for _, tn := range []uint{1, 10, 20, 100, 200} {
-				if tn < dn {
-					continue
-				}
+			for _, tdn := range []uint{1, 2, 5, 10} {
+				mdb.SetMaxOpenConns(int(n))
+				mdb.SetMaxIdleConns(int(n))
+				tn := dn * tdn
 				utils.AppLog.Infof("Start test. DB:%d,TB:%d,Routine:%d", dn, tn, n)
 				tmp = insertDataTest(dn, tn, n)
 				tmp.Func = "InsertDataTest"
@@ -145,7 +149,7 @@ func insertDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	}
 	wg.Wait()
 	cost := time.Since(startTime)
-	utils.AppLog.Debugf("db:%2d, tb:%2d, routine:%2d, cost:%8.4f s, speed:%7.4f tps",
+	utils.AppLog.Debugf("db:%-2d, tb:%-4d, routine:%-4d, cost:%-10.3f s,  speed:%-10.3f tps",
 		DBNum, tableNum, connNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
 	return excel.RowData{
 		Routine: connNum,
@@ -191,7 +195,7 @@ func ReadDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	}
 	wg.Wait()
 	cost := time.Since(startTime)
-	utils.AppLog.Debugf("db:%2d, tb:%2d, routine:%2d, cost:%8.4f s, speed:%8.4f tps",
+	utils.AppLog.Debugf("db:%-2d, tb:%-2d, routine:%-2d, cost:%-10.3f s,  speed:%-10.3f tps",
 		DBNum, tableNum, connNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
 	return excel.RowData{
 		Routine: connNum,
@@ -236,7 +240,7 @@ func UpdateDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	}
 	wg.Wait()
 	cost := time.Since(startTime)
-	utils.AppLog.Debugf("db:%2d, tb:%2d, routine:%2d, cost:%8.4f s, speed:%8.4f tps",
+	utils.AppLog.Debugf("db:%-2d, tb:%-2d, routine:%-2d, cost:%-10.3f s,  speed:%-10.3f tps",
 		DBNum, tableNum, connNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
 	return excel.RowData{
 		Routine: connNum,

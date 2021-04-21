@@ -7,3 +7,4 @@ port: 3306
 init_rows: 1000000
 max_db_conns: 100
 max_conn_life_time: 0
+pool_stat_log: true
