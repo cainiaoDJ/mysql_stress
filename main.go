@@ -10,6 +10,7 @@ import (
 	"mysql_stress/msql"
 	"mysql_stress/utils"
 	"os"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -41,7 +42,6 @@ func main() {
 	//insertDataTest(config.Cfg.DBNum, config.Cfg.TableNum)
 	var xlsData []excel.RowData
 	var tmp excel.RowData
-	tmp.Counter = config.Cfg.InitRows
 
 	mdb, err := dbObj.DB()
 	if err != nil {
@@ -57,6 +57,8 @@ func main() {
 			}
 		}()
 	}
+	mdb.SetMaxOpenConns(int(config.Cfg.MaxDBConns))
+	mdb.SetMaxIdleConns(int(config.Cfg.MaxDBConns))
 
 	mdb.SetConnMaxLifetime(time.Duration(config.Cfg.MaxDBConnsLifetime) * time.Second)
 	defer msql.CleanTestDB(dbObj)
@@ -65,18 +67,13 @@ func main() {
 	for _, n := range []uint{10, 50, 100, 200, 400, 500} {
 		for _, dn := range []uint{1, 2, 10, 20, 100} {
 			for _, tdn := range []uint{1, 2, 5, 10} {
-				mdb.SetMaxOpenConns(int(n))
-				mdb.SetMaxIdleConns(int(n))
 				tn := dn * tdn
-				utils.AppLog.Infof("Start test. DB:%d,TB:%d,Routine:%d", dn, tn, n)
+				utils.AppLog.Infof("Start test. DB:%d,TB:%d,Routine:%d,MaxOpen:%d", dn, tn, n, config.Cfg.MaxDBConns)
 				tmp = insertDataTest(dn, tn, n)
-				tmp.Func = "InsertDataTest"
 				xlsData = append(xlsData, tmp)
 				tmp = ReadDataTest(dn, tn, n)
-				tmp.Func = "ReadDataTest"
 				xlsData = append(xlsData, tmp)
 				tmp = UpdateDataTest(dn, tn, n)
-				tmp.Func = "UpdateDataTest"
 				xlsData = append(xlsData, tmp)
 			}
 		}
@@ -91,7 +88,7 @@ func main() {
 }
 
 func insertDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
-	msql.InitDB(DBNum)
+	msql.InitDB(dbObj, DBNum)
 	createSQL := msql.GetCreateTableSQL(DBNum, tableNum)
 	//dbs = msql.GetDBConnects(DBNum)
 	//// init db
@@ -151,12 +148,15 @@ func insertDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	cost := time.Since(startTime)
 	utils.AppLog.Debugf("db:%-2d, tb:%-4d, routine:%-4d, cost:%-10.3f s,  speed:%-10.3f tps",
 		DBNum, tableNum, connNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
+	pc, _, _, _ := runtime.Caller(0)
 	return excel.RowData{
 		Routine: connNum,
 		DBNum:   DBNum,
 		TbNum:   tableNum,
 		Cost:    cost.Seconds(),
 		Speed:   float64(config.Cfg.InitRows) / cost.Seconds(),
+		Counter: config.Cfg.InitRows,
+		Func:    runtime.FuncForPC(pc).Name(),
 	}
 }
 
@@ -197,12 +197,15 @@ func ReadDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	cost := time.Since(startTime)
 	utils.AppLog.Debugf("db:%-2d, tb:%-2d, routine:%-2d, cost:%-10.3f s,  speed:%-10.3f tps",
 		DBNum, tableNum, connNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
+	pc, _, _, _ := runtime.Caller(0)
 	return excel.RowData{
 		Routine: connNum,
 		DBNum:   DBNum,
 		TbNum:   tableNum,
 		Cost:    cost.Seconds(),
 		Speed:   float64(config.Cfg.InitRows) / cost.Seconds(),
+		Counter: config.Cfg.InitRows,
+		Func:    runtime.FuncForPC(pc).Name(),
 	}
 }
 
@@ -242,11 +245,14 @@ func UpdateDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	cost := time.Since(startTime)
 	utils.AppLog.Debugf("db:%-2d, tb:%-2d, routine:%-2d, cost:%-10.3f s,  speed:%-10.3f tps",
 		DBNum, tableNum, connNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
+	pc, _, _, _ := runtime.Caller(0)
 	return excel.RowData{
 		Routine: connNum,
 		DBNum:   DBNum,
 		TbNum:   tableNum,
 		Cost:    cost.Seconds(),
 		Speed:   float64(config.Cfg.InitRows) / cost.Seconds(),
+		Counter: config.Cfg.InitRows,
+		Func:    runtime.FuncForPC(pc).Name(),
 	}
 }

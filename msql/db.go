@@ -55,23 +55,9 @@ func CleanTestDB(db *gorm.DB) {
 	utils.AppLog.Info("clean test db completed!")
 }
 
-func InitDB(DBNum uint) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/?charset=utf8",
-		config.Cfg.Username,
-		config.Cfg.Password,
-		config.Cfg.Host,
-		config.Cfg.Port,
-	)
-
-	//db, err := xorm.NewEngine("mysql", dsn)
-	db, err := gorm.Open(mysql.Open(dsn))
-	if err != nil {
-		panic("db connect failed:" + err.Error())
-	}
-
+func InitDB(db *gorm.DB, DBNum uint) {
 	CleanTestDB(db)
 
-	//time.Sleep(5 * time.Second)
 	createSQL := getCreateDBSQL(DBNum)
 	for _, s := range createSQL {
 		tx := db.Exec(s)
