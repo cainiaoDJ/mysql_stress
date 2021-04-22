@@ -87,7 +87,7 @@ func main() {
 	utils.AppLog.Info("write result to excel")
 }
 
-func insertDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
+func insertDataTest(DBNum uint, tableNum uint, routineNum uint) excel.RowData {
 	msql.InitDB(dbObj, DBNum)
 	createSQL := msql.GetCreateTableSQL(DBNum, tableNum)
 	//dbs = msql.GetDBConnects(DBNum)
@@ -121,10 +121,10 @@ func insertDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	utils.AppLog.Infof("table create complete! tb:%d", tableNum)
 
 	startTime := time.Now()
-	var step = config.Cfg.InitRows / connNum
+	var step = config.Cfg.InitRows / routineNum
 	var wg sync.WaitGroup
 
-	for pid := uint(0); pid < connNum; pid++ {
+	for pid := uint(0); pid < routineNum; pid++ {
 		wg.Add(1)
 		startID := 100000000 + pid*step
 		endId := startID + step
@@ -147,20 +147,20 @@ func insertDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	wg.Wait()
 	cost := time.Since(startTime)
 	utils.AppLog.Debugf("db:%-2d, tb:%-4d, routine:%-4d, cost:%-10.3f s,  speed:%-10.3f tps",
-		DBNum, tableNum, connNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
+		DBNum, tableNum, routineNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
 	pc, _, _, _ := runtime.Caller(0)
 	return excel.RowData{
-		Routine: connNum,
+		Routine: routineNum,
 		DBNum:   DBNum,
 		TbNum:   tableNum,
 		Cost:    cost.Seconds(),
 		Speed:   float64(config.Cfg.InitRows) / cost.Seconds(),
-		Counter: config.Cfg.InitRows,
+		Info:    fmt.Sprintf("Counter:%d,MaxConn:%d", config.Cfg.InitRows, config.Cfg.MaxDBConns),
 		Func:    runtime.FuncForPC(pc).Name(),
 	}
 }
 
-func ReadDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
+func ReadDataTest(DBNum uint, tableNum uint, routineNum uint) excel.RowData {
 	//dbs := msql.GetDBConnects(DBNum)
 	//defer func() {
 	//	for _, db := range dbs {
@@ -174,12 +174,12 @@ func ReadDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 
 	var wg sync.WaitGroup
 	startTime := time.Now()
-	for pid := uint(0); pid < connNum; pid++ {
+	for pid := uint(0); pid < routineNum; pid++ {
 		wg.Add(1)
 		//utils.AppLog.Info("insert data,pid:", pid)
 		go func() {
 			defer wg.Done()
-			for i := uint(0); i < config.Cfg.InitRows/connNum; i++ {
+			for i := uint(0); i < config.Cfg.InitRows/routineNum; i++ {
 				random := rand.New(rand.NewSource(time.Now().UnixNano()))
 				uid := uint(random.Int63n(int64(config.Cfg.InitRows))) + 100000000
 				db := uid % DBNum
@@ -196,20 +196,20 @@ func ReadDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	wg.Wait()
 	cost := time.Since(startTime)
 	utils.AppLog.Debugf("db:%-2d, tb:%-2d, routine:%-2d, cost:%-10.3f s,  speed:%-10.3f tps",
-		DBNum, tableNum, connNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
+		DBNum, tableNum, routineNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
 	pc, _, _, _ := runtime.Caller(0)
 	return excel.RowData{
-		Routine: connNum,
+		Routine: routineNum,
 		DBNum:   DBNum,
 		TbNum:   tableNum,
 		Cost:    cost.Seconds(),
 		Speed:   float64(config.Cfg.InitRows) / cost.Seconds(),
-		Counter: config.Cfg.InitRows,
+		Info:    fmt.Sprintf("Counter:%d,MaxConn:%d", config.Cfg.InitRows, config.Cfg.MaxDBConns),
 		Func:    runtime.FuncForPC(pc).Name(),
 	}
 }
 
-func UpdateDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
+func UpdateDataTest(DBNum uint, tableNum uint, routineNum uint) excel.RowData {
 	//dbs := msql.GetDBConnects(DBNum)
 	//defer func() {
 	//	for _, db := range dbs {
@@ -223,12 +223,12 @@ func UpdateDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 
 	var wg sync.WaitGroup
 	startTime := time.Now()
-	for pid := uint(0); pid < connNum; pid++ {
+	for pid := uint(0); pid < routineNum; pid++ {
 		wg.Add(1)
 		//utils.AppLog.Info("insert data,pid:", pid)
 		go func() {
 			defer wg.Done()
-			for i := uint(0); i < config.Cfg.InitRows/connNum; i++ {
+			for i := uint(0); i < config.Cfg.InitRows/routineNum; i++ {
 				random := rand.New(rand.NewSource(time.Now().UnixNano()))
 				uid := uint(random.Int63n(int64(config.Cfg.InitRows))) + 100000000
 				db := uid % DBNum
@@ -244,15 +244,15 @@ func UpdateDataTest(DBNum uint, tableNum uint, connNum uint) excel.RowData {
 	wg.Wait()
 	cost := time.Since(startTime)
 	utils.AppLog.Debugf("db:%-2d, tb:%-2d, routine:%-2d, cost:%-10.3f s,  speed:%-10.3f tps",
-		DBNum, tableNum, connNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
+		DBNum, tableNum, routineNum, cost.Seconds(), float64(config.Cfg.InitRows)/cost.Seconds())
 	pc, _, _, _ := runtime.Caller(0)
 	return excel.RowData{
-		Routine: connNum,
+		Routine: routineNum,
 		DBNum:   DBNum,
 		TbNum:   tableNum,
 		Cost:    cost.Seconds(),
 		Speed:   float64(config.Cfg.InitRows) / cost.Seconds(),
-		Counter: config.Cfg.InitRows,
+		Info:    fmt.Sprintf("Counter:%d,MaxConn:%d", config.Cfg.InitRows, config.Cfg.MaxDBConns),
 		Func:    runtime.FuncForPC(pc).Name(),
 	}
 }

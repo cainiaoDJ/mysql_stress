@@ -11,7 +11,7 @@ const defalut_sheet = "RAW_DATA"
 
 type RowData struct {
 	Func    string
-	Counter uint
+	Info    string
 	Routine uint
 	DBNum   uint
 	TbNum   uint
@@ -23,7 +23,7 @@ func WriteToExcel(data []RowData, fileName string) error {
 	xls := excelize.NewFile()
 	sheet := xls.NewSheet(defalut_sheet)
 	xls.SetCellStr(defalut_sheet, getExcelKey(1, 1), "Func")
-	xls.SetCellStr(defalut_sheet, getExcelKey(1, 2), "Counter")
+	xls.SetCellStr(defalut_sheet, getExcelKey(1, 2), "Info")
 	xls.SetCellStr(defalut_sheet, getExcelKey(1, 3), "Routine")
 	xls.SetCellStr(defalut_sheet, getExcelKey(1, 4), "DBNum")
 	xls.SetCellStr(defalut_sheet, getExcelKey(1, 5), "TbNum")
@@ -32,7 +32,7 @@ func WriteToExcel(data []RowData, fileName string) error {
 	xls.SetActiveSheet(sheet)
 	for k1, rd := range data {
 		xls.SetCellStr(defalut_sheet, getExcelKey(k1+2, 1), rd.Func)
-		xls.SetCellInt(defalut_sheet, getExcelKey(k1+2, 2), int(rd.Counter))
+		xls.SetCellStr(defalut_sheet, getExcelKey(k1+2, 2), rd.Info)
 		xls.SetCellInt(defalut_sheet, getExcelKey(k1+2, 3), int(rd.Routine))
 		xls.SetCellInt(defalut_sheet, getExcelKey(k1+2, 4), int(rd.DBNum))
 		xls.SetCellInt(defalut_sheet, getExcelKey(k1+2, 5), int(rd.TbNum))
