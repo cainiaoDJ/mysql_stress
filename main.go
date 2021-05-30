@@ -64,17 +64,20 @@ func main() {
 	defer msql.CleanTestDB(dbObj)
 
 	// 先从高并发往低并发走
-	for _, n := range []uint{10, 50, 100, 200, 400, 500} {
-		for _, dn := range []uint{1, 2, 10, 20, 100} {
-			for _, tdn := range []uint{1, 2, 5, 10} {
+	for _, n := range []uint{10, 20, 50, 100, 200, 400, 500} {
+		for _, dn := range []uint{1} {
+			for _, tdn := range []uint{1, 2, 5, 10, 20, 50, 100} {
 				tn := dn * tdn
 				utils.AppLog.Infof("Start test. DB:%d,TB:%d,Routine:%d,MaxOpen:%d", dn, tn, n, config.Cfg.MaxDBConns)
 				tmp = insertDataTest(dn, tn, n)
 				xlsData = append(xlsData, tmp)
+				excel.WriteToExcel(xlsData, "mysql_stress")
 				tmp = ReadDataTest(dn, tn, n)
 				xlsData = append(xlsData, tmp)
+				excel.WriteToExcel(xlsData, "mysql_stress")
 				tmp = UpdateDataTest(dn, tn, n)
 				xlsData = append(xlsData, tmp)
+				excel.WriteToExcel(xlsData, "mysql_stress")
 			}
 		}
 	}
@@ -157,6 +160,7 @@ func insertDataTest(DBNum uint, tableNum uint, routineNum uint) excel.RowData {
 		Speed:   float64(config.Cfg.InitRows) / cost.Seconds(),
 		Info:    fmt.Sprintf("Counter:%d,MaxConn:%d", config.Cfg.InitRows, config.Cfg.MaxDBConns),
 		Func:    runtime.FuncForPC(pc).Name(),
+		Time:    time.Now(),
 	}
 }
 
@@ -206,6 +210,7 @@ func ReadDataTest(DBNum uint, tableNum uint, routineNum uint) excel.RowData {
 		Speed:   float64(config.Cfg.InitRows) / cost.Seconds(),
 		Info:    fmt.Sprintf("Counter:%d,MaxConn:%d", config.Cfg.InitRows, config.Cfg.MaxDBConns),
 		Func:    runtime.FuncForPC(pc).Name(),
+		Time:    time.Now(),
 	}
 }
 
@@ -254,5 +259,6 @@ func UpdateDataTest(DBNum uint, tableNum uint, routineNum uint) excel.RowData {
 		Speed:   float64(config.Cfg.InitRows) / cost.Seconds(),
 		Info:    fmt.Sprintf("Counter:%d,MaxConn:%d", config.Cfg.InitRows, config.Cfg.MaxDBConns),
 		Func:    runtime.FuncForPC(pc).Name(),
+		Time:    time.Now(),
 	}
 }
