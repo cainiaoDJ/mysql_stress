@@ -64,9 +64,9 @@ func main() {
 	defer msql.CleanTestDB(dbObj)
 
 	// 先从高并发往低并发走
-	for _, n := range []uint{10, 20, 50, 100, 200, 400, 500} {
-		for _, dn := range []uint{1} {
-			for _, tdn := range []uint{1, 2, 5, 10, 20, 50, 100} {
+	for _, n := range config.Cfg.RoutineNumList {
+		for _, dn := range config.Cfg.DbNumList {
+			for _, tdn := range config.Cfg.TbNumList {
 				tn := dn * tdn
 				utils.AppLog.Infof("Start test. DB:%d,TB:%d,Routine:%d,MaxOpen:%d", dn, tn, n, config.Cfg.MaxDBConns)
 				tmp = insertDataTest(dn, tn, n)

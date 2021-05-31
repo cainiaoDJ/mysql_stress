@@ -16,6 +16,9 @@ type AppConfig struct {
 	MaxDBConns         uint   `yaml:"max_db_conns"`
 	MaxDBConnsLifetime uint   `yaml:"max_conn_life_time"`
 	PoolStatLog        bool   `yaml:"pool_stat_log"`
+	DbNumList          []uint `yaml:"db_num_list"`
+	TbNumList          []uint `yaml:"tb_num_list"`
+	RoutineNumList     []uint `yaml:"routine_num_list"`
 }
 
 var Cfg *AppConfig
@@ -33,6 +36,9 @@ func LoadAppConfig(cfgPath string) {
 			MaxDBConns:         100,
 			MaxDBConnsLifetime: 0,
 			PoolStatLog:        true,
+			DbNumList:          []uint{1},
+			TbNumList:          []uint{1},
+			RoutineNumList:     []uint{10},
 		}
 		return
 	}
